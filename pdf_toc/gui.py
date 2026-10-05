@@ -182,16 +182,12 @@ class App(tk.Tk):
         ):
             return
 
-        # Xóa khỏi config
         cfg = cfg_mod.load_config()
         cfg["gemini_api_key"] = ""
         cfg["last_saved"] = ""
         cfg_mod.save_config(cfg)
 
-        # Xóa khỏi UI
         self.api_key_var.set("")
-
-        # Cập nhật trạng thái
         self._refresh_key_status()
         self._set_status("🗑️ Đã xóa API key.", ok=True)
 
@@ -310,11 +306,17 @@ class App(tk.Tk):
 
                 merge_translated(md_path, translated_json, vi_md)
 
+                # ✅ Dịch thành công → báo về main thread
                 self.after(0, lambda: self._on_translate_done(vi_md, n))
+
             except GeminiError as ge:
-                self.after(0, lambda: self._on_translate_err(str(ge)))
+                # ✅ Lấy string TRƯỚC khi vào lambda (tránh bug closure)
+                msg = str(ge)
+                self.after(0, lambda m=msg: self._on_translate_err(m))
+
             except Exception as e:
-                self.after(0, lambda: self._on_translate_err(str(e)))
+                msg = str(e)
+                self.after(0, lambda m=msg: self._on_translate_err(m))
 
         threading.Thread(target=worker, daemon=True).start()
 
