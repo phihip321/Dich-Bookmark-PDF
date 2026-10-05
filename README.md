@@ -12,7 +12,7 @@ Dịch mục lục (bookmark/outline) trong file PDF sang tiếng Việt bằng 
 ## Yêu cầu
 
 - Python 3.12 – 3.14
-- API key Gemini (lấy miễn phí tại https://aistudio.google.com/apikey)
+- API key Gemini
 
 ## Cài đặt
 
