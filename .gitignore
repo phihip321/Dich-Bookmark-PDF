@@ -1,0 +1,20 @@
+﻿__pycache__/
+*.py[cod]
+
+venv/
+.venv/
+env/
+
+# Build
+build/
+dist/
+*.exe
+
+# File cấu hình chứa API key
+.pdf-toc.json
+
+# File tạm khi xử lý PDF
+*_titles.json
+*_translated.json
+*_vi.md
+*_vi.pdf
