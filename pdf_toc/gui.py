@@ -41,6 +41,7 @@ class App(tk.Tk):
         f0 = ttk.LabelFrame(self, text=" Gemini API Key ", padding=10)
         f0.pack(fill="x", **pad)
 
+        # Dòng 1: API Key + nút 👁 Lưu 🗑️
         row = ttk.Frame(f0); row.pack(fill="x")
         ttk.Label(row, text="API Key:", width=10).pack(side="left")
         self.key_entry = ttk.Entry(
@@ -50,14 +51,22 @@ class App(tk.Tk):
         ttk.Button(row, text="👁", width=4,
                    command=self.toggle_key).pack(side="left", padx=(0, 4))
         ttk.Button(row, text="💾 Lưu", width=8,
-                   command=self.save_key).pack(side="left")
+                   command=self.save_key).pack(side="left", padx=(0, 4))
+        ttk.Button(row, text="🗑️", width=4,
+                   command=self.delete_key).pack(side="left")
 
+        # Dòng 2: Model (Entry + Combobox gợi ý)
         row2 = ttk.Frame(f0); row2.pack(fill="x", pady=(6, 0))
         ttk.Label(row2, text="Model:", width=10).pack(side="left")
-        ttk.Combobox(row2, textvariable=self.model_var,
-                     values=MODELS, state="readonly",
-                     width=28).pack(side="left")
+        self.model_combo = ttk.Combobox(
+            row2, textvariable=self.model_var,
+            values=MODELS, width=40
+        )
+        self.model_combo.pack(side="left", fill="x", expand=True)
+        ttk.Label(row2, text="(có thể gõ tên model khác)",
+                  foreground="#888").pack(side="left", padx=(6, 0))
 
+        # Dòng 3: Status
         self.key_status = ttk.Label(f0, text="Chưa có API key.",
                                     foreground="#a00")
         self.key_status.pack(anchor="w", pady=(6, 0))
@@ -122,9 +131,9 @@ class App(tk.Tk):
     def _load_saved_config(self):
         cfg = cfg_mod.load_config()
         key = cfg.get("gemini_api_key", "")
-        model = cfg.get("model", MODELS[0])
+        model = cfg.get("model", MODELS[0]) or MODELS[0]
         self.api_key_var.set(key)
-        self.model_var.set(model if model in MODELS else MODELS[0])
+        self.model_var.set(model)
         self._refresh_key_status()
 
     def _refresh_key_status(self):
@@ -149,12 +158,42 @@ class App(tk.Tk):
 
     def save_key(self):
         key = self.api_key_var.get().strip()
+        model = self.model_var.get().strip()
+
         if not key:
             messagebox.showwarning("Thiếu key", "Bạn chưa nhập API key.")
             return
-        cfg_mod.set_api_key(key, self.model_var.get())
+        if not model:
+            messagebox.showwarning("Thiếu model",
+                                   "Bạn chưa nhập tên model.\n"
+                                   "VD: gemini-3.5-flash")
+            return
+
+        cfg_mod.set_api_key(key, model)
         self._refresh_key_status()
-        self._set_status("💾 Đã lưu API key.", ok=True)
+        self._set_status(f"💾 Đã lưu key · Model: {model}", ok=True)
+
+    def delete_key(self):
+        """Xóa API key khỏi config."""
+        if not messagebox.askyesno(
+            "Xác nhận xóa",
+            "Bạn có chắc muốn xóa API key?\n\n"
+            "Sau khi xóa, phải nhập lại key mới để dùng Gemini."
+        ):
+            return
+
+        # Xóa khỏi config
+        cfg = cfg_mod.load_config()
+        cfg["gemini_api_key"] = ""
+        cfg["last_saved"] = ""
+        cfg_mod.save_config(cfg)
+
+        # Xóa khỏi UI
+        self.api_key_var.set("")
+
+        # Cập nhật trạng thái
+        self._refresh_key_status()
+        self._set_status("🗑️ Đã xóa API key.", ok=True)
 
     # ================== Chọn PDF ==================
     def choose_pdf(self):
