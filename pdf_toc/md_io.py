@@ -73,7 +73,7 @@ def export_titles_json(md_path: str, json_path: str) -> int:
     return len(titles)
 
 
-# ---------------- GHÉP BẢN DỊCH ----------------
+# ---------------- GHÉP BẢN DỊCH (từ file JSON) ----------------
 def merge_translated(md_path: str, translated_json_path: str,
                      out_md_path: str) -> int:
     """Ghép mảng title dịch vào cấu trúc gốc -> md tiếng Việt."""
@@ -82,8 +82,17 @@ def merge_translated(md_path: str, translated_json_path: str,
     with open(translated_json_path, "r", encoding="utf-8") as f:
         translated = json.load(f)
 
+    return merge_translated_list(md_path, translated, out_md_path)
+
+
+# ---------------- GHÉP BẢN DỊCH (từ list trực tiếp) ----------------
+def merge_translated_list(md_path: str, translated: list,
+                          out_md_path: str) -> int:
+    """Ghép list bản dịch trực tiếp vào cấu trúc gốc."""
+    items = load_markdown(md_path)
+
     if not isinstance(translated, list):
-        raise ValueError("File bản dịch không phải JSON array.")
+        raise ValueError("Bản dịch không phải dạng list.")
     if len(translated) != len(items):
         raise ValueError(
             f"Số lượng không khớp: gốc {len(items)} mục, "
@@ -98,7 +107,9 @@ def merge_translated(md_path: str, translated_json_path: str,
     )]
     for it, new_title in zip(items, translated):
         indent = "  " * it.level
-        lines.append(f"{indent}- {it.level}|Page {it.page}|{str(new_title).strip()}")
+        lines.append(
+            f"{indent}- {it.level}|Page {it.page}|{str(new_title).strip()}"
+        )
 
     with open(out_md_path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
